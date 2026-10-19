@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Portal;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\DeviceMonitoringControl;
 use App\Services\UserNotificationInbox;
 use App\Services\PortalDeviceScope;
 use App\Support\TableSearch;
@@ -12,6 +13,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class RolePortalController extends Controller
@@ -33,9 +35,37 @@ class RolePortalController extends Controller
         $this->validatePortalRole($user);
         $devices = $this->visibleDevices($user);
         $isDealer = $user->role->role_code === 'DEALER';
+        $isEndCustomer = $user->role->role_code === 'END_CUSTOMER';
         $deviceIds = (clone $devices)->select('devices.device_id');
+        $latestConfigurations = DB::table('device_configurations')
+            ->select('device_id')
+            ->selectRaw('MAX(config_version) as latest_config_version')
+            ->groupBy('device_id');
         $search = TableSearch::term($request);
         $deviceRows = clone $devices;
+        $deviceRows
+            ->leftJoinSub($latestConfigurations, 'latest_configurations', function ($join): void {
+                $join->on('latest_configurations.device_id', '=', 'devices.device_id');
+            })
+            ->leftJoin('device_configurations as current_configuration', function ($join): void {
+                $join->on('current_configuration.device_id', '=', 'devices.device_id')
+                    ->on('current_configuration.config_version', '=', 'latest_configurations.latest_config_version');
+            })
+            ->addSelect(DB::raw("COALESCE(current_configuration.manual_override, current_configuration.monitoring_mode, 'DISARMED') as monitoring_state"))
+            ->addSelect([
+                'command_pending' => DB::table('device_commands')
+                    ->selectRaw('1')
+                    ->whereColumn('device_commands.device_id', 'devices.device_id')
+                    ->whereIn('device_commands.status', ['pending', 'sent'])
+                    ->where(function ($query): void {
+                        $query->where('device_commands.expires_at', '>', now())
+                            ->orWhere(function ($legacyQuery): void {
+                                $legacyQuery->whereNull('device_commands.expires_at')
+                                    ->where('device_commands.requested_at', '>', now()->subMinutes(5));
+                            });
+                    })
+                    ->limit(1),
+            ]);
         TableSearch::apply($deviceRows, $search, [
             'devices.device_uid', 'devices.model', 'devices.lifecycle_status',
             'devices.connectivity_status', 'companies.company_name',
@@ -53,6 +83,7 @@ class RolePortalController extends Controller
             'roleName' => $user->role->role_name,
             'unreadNotificationCount' => $inbox->unreadCount($user),
             'isDealer' => $isDealer,
+            'isEndCustomer' => $isEndCustomer,
             'dealerHierarchy' => $isDealer
                 ? app(PortalDeviceScope::class)->dealerHierarchy($user, $devices)
                 : [],
@@ -68,6 +99,29 @@ class RolePortalController extends Controller
                 ->withQueryString(),
             'recentAlerts' => $recentAlerts->orderByDesc('alerts.triggered_at')->limit(8)->get(),
         ]);
+    }
+
+    public function setMonitoringState(Request $request, int $device, DeviceMonitoringControl $control): RedirectResponse
+    {
+        $user = $this->portalUser();
+        if ($user instanceof RedirectResponse) {
+            return $user;
+        }
+        if ($user->role?->role_code !== 'END_CUSTOMER') {
+            abort(403);
+        }
+
+        $data = $request->validate([
+            'state' => ['required', Rule::in(['ARMED', 'DISARMED'])],
+        ]);
+
+        $result = $control->requestState($request, $user, $device, $data['state']);
+
+        $message = $result['changed']
+            ? 'The '.$result['state'].' command has been queued. The device state will update after it confirms the change.'
+            : 'This device is already '.$result['state'].'.';
+
+        return redirect()->route('portal.dashboard')->with('status', $message);
     }
 
     public function notifications(Request $request, UserNotificationInbox $inbox): View|RedirectResponse

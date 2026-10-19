@@ -93,6 +93,7 @@ class MonitoringManagementController extends Controller
                 'status' => 'pending',
                 'requested_by' => $request->user()->getAuthIdentifier(),
                 'requested_at' => now(),
+                'expires_at' => now()->addMinutes(5),
             ], 'command_id');
             $audit->record(
                 $request,

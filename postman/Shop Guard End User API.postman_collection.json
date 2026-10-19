@@ -1,0 +1,377 @@
+{
+  "info": {
+    "_postman_id": "cbdc8ea5-b5b2-4bf0-89ad-6491b29ebdf2",
+    "name": "Shop Guard - End User API",
+    "description": "End User Android API. Set base_url to the Laravel app origin (for example http://127.0.0.1:8000). Register or log in to save an access token automatically; protected requests use it as a Bearer token.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8000",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "email",
+      "value": "end-user@example.test",
+      "type": "string"
+    },
+    {
+      "key": "password",
+      "value": "ChooseAStrongPassword123",
+      "type": "string"
+    },
+    {
+      "key": "serial_number",
+      "value": "SG-DEMO-SERIAL-001",
+      "type": "string"
+    },
+    {
+      "key": "push_token",
+      "value": "replace-with-device-push-token",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register End User",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"Alex Customer\",\n  \"email\": \"{{email}}\",\n  \"mobile\": \"+15551234567\",\n  \"serial_number\": \"{{serial_number}}\",\n  \"password\": \"{{password}}\",\n  \"password_confirmation\": \"{{password}}\",\n  \"device_name\": \"android-phone\"\n}"
+            },
+            "url": "{{base_url}}/api/v1/end-user/register",
+            "description": "Creates an End Customer and claims an available device by serial number. On success, stores the returned token in the collection variable access_token."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const body = pm.response.json();",
+                  "  if (body.data && body.data.token) pm.collectionVariables.set('access_token', body.data.token);",
+                  "}",
+                  "pm.test('Registration returns 201', function () { pm.response.to.have.status(201); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"device_name\": \"android-phone\"\n}"
+            },
+            "url": "{{base_url}}/api/v1/end-user/login",
+            "description": "End User-only login. Automatically saves the returned bearer token."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const body = pm.response.json();",
+                  "  if (body.data && body.data.token) pm.collectionVariables.set('access_token', body.data.token);",
+                  "}",
+                  "pm.test('Login returns 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/end-user/logout",
+            "description": "Revokes the current bearer token and clears it from the collection."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) pm.collectionVariables.unset('access_token');",
+                  "pm.test('Logout returns 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Dashboard & Device",
+      "item": [
+        {
+          "name": "Get Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/end-user/dashboard"
+          }
+        },
+        {
+          "name": "Get Device",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/end-user/device"
+          }
+        },
+        {
+          "name": "Set Monitoring State - Arm",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"state\": \"ARMED\"\n}"
+            },
+            "url": "{{base_url}}/api/v1/end-user/device/monitoring-state",
+            "description": "Queues an Arm command. A 202 response means the device confirmation is pending."
+          }
+        },
+        {
+          "name": "Set Monitoring State - Disarm",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"state\": \"DISARMED\"\n}"
+            },
+            "url": "{{base_url}}/api/v1/end-user/device/monitoring-state",
+            "description": "Queues a Disarm command. A 202 response means the device confirmation is pending."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "List Notifications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/end-user/notifications"
+          }
+        },
+        {
+          "name": "Mark Notifications Read",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/end-user/notifications/read"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Profile",
+      "item": [
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/end-user/profile"
+          }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"Alex Customer\",\n  \"email\": \"{{email}}\",\n  \"mobile\": \"+15551234567\"\n}"
+            },
+            "url": "{{base_url}}/api/v1/end-user/profile"
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"current_password\": \"{{password}}\",\n  \"new_password\": \"ChooseANewStrongPassword456\",\n  \"new_password_confirmation\": \"ChooseANewStrongPassword456\"\n}"
+            },
+            "url": "{{base_url}}/api/v1/end-user/profile/password",
+            "description": "Changing the password revokes all existing tokens. Log in again after this request."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Push Notifications",
+      "item": [
+        {
+          "name": "Register Push Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"platform\": \"ANDROID\",\n  \"token\": \"{{push_token}}\"\n}"
+            },
+            "url": "{{base_url}}/api/v1/end-user/push-token"
+          }
+        },
+        {
+          "name": "Deactivate Push Token",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{push_token}}\"\n}"
+            },
+            "url": "{{base_url}}/api/v1/end-user/push-token"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -226,17 +226,6 @@ class ShopGuardDemoSeeder extends Seeder
                 ]);
             }
 
-            if (!DB::table('device_commands')->where('device_id', $assignedDeviceId)->whereRaw("requested_payload->>'demo_key' = ?", ['SG-DEMO-SYNC'])->exists()) {
-                DB::table('device_commands')->insert([
-                    'device_id' => $assignedDeviceId,
-                    'command_type' => 'SYNC_CONFIG',
-                    'requested_payload' => json_encode(['demo_key' => 'SG-DEMO-SYNC', 'config_version' => 1], JSON_THROW_ON_ERROR),
-                    'status' => 'pending',
-                    'requested_by' => $userIds['company-admin'],
-                    'requested_at' => $now,
-                ]);
-            }
-
             foreach (['ARMED', 'DISARMED', 'SHUTTER_OPEN'] as $eventType) {
                 foreach (['EMAIL', 'PUSH'] as $channel) {
                     DB::table('notification_rules')->updateOrInsert(

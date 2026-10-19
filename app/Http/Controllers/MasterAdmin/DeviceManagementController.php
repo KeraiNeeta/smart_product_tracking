@@ -4,6 +4,7 @@ namespace App\Http\Controllers\MasterAdmin;
 
 use App\Http\Controllers\Controller;
 use App\Services\AdminAuditLogger;
+use App\Services\DefaultCompany;
 use App\Support\TableSearch;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -41,15 +42,21 @@ class DeviceManagementController extends Controller
 
     public function create(): View
     {
+        $defaultCompanyId = app(DefaultCompany::class)->id();
+
         return view('master-admin.devices.form-page', [
             'device' => null,
-            'companies' => DB::table('companies')->orderBy('company_name')->get(),
+            'companies' => DB::table('companies')
+                ->where('company_id', $defaultCompanyId ?? 0)
+                ->get(),
+            'defaultCompanyId' => $defaultCompanyId,
         ]);
     }
 
     public function store(Request $request, AdminAuditLogger $audit): RedirectResponse
     {
         $data = $this->validated($request);
+        $data['company_id'] = app(DefaultCompany::class)->requireId();
         $data['created_at'] = now();
         $data['updated_at'] = now();
 
@@ -182,6 +189,7 @@ class DeviceManagementController extends Controller
         ]);
 
         $owner = DB::table('users')->where('user_id', $data['owner_user_id'])->firstOrFail();
+        $ownerRole = DB::table('roles')->where('role_id', $owner->role_id)->value('role_code');
         $shop = isset($data['shop_id'])
             ? DB::table('shops')->where('shop_id', $data['shop_id'])->firstOrFail()
             : null;
@@ -192,13 +200,27 @@ class DeviceManagementController extends Controller
             ]);
         }
 
-        DB::transaction(function () use ($request, $device, $data, $owner, $shop, $audit): void {
+        DB::transaction(function () use ($request, $device, $data, $owner, $ownerRole, $shop, $audit): void {
+            DB::table('users')->where('user_id', $owner->user_id)->lockForUpdate()->firstOrFail();
             $deviceRecord = DB::table('devices')->whereNull('deleted_at')->where('device_id', $device)->lockForUpdate()->firstOrFail();
             $current = DB::table('device_assignments')
                 ->where('device_id', $device)
                 ->where('is_current', true)
                 ->lockForUpdate()
                 ->first();
+
+            if ($ownerRole === 'END_CUSTOMER') {
+                $alreadyHasDevice = DB::table('device_assignments')
+                    ->where('owner_user_id', $owner->user_id)
+                    ->where('is_current', true)
+                    ->where('device_id', '!=', $device)
+                    ->exists();
+                if ($alreadyHasDevice) {
+                    throw ValidationException::withMessages([
+                        'owner_user_id' => 'An End Customer can only have one assigned device.',
+                    ]);
+                }
+            }
 
             if ($current) {
                 DB::table('device_assignments')

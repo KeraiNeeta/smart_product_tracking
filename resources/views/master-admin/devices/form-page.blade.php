@@ -17,7 +17,8 @@
             <div class="field"><label for="model">Model</label><input id="model" name="model" value="{{ old('model', $device?->model) }}" maxlength="100"></div>
             <div class="field"><label for="firmware_version">Firmware version</label><input id="firmware_version" name="firmware_version" value="{{ old('firmware_version', $device?->firmware_version) }}" maxlength="100"></div>
             @if (!$device)
-                <div class="field"><label for="company_id">Initial company</label><select id="company_id" name="company_id"><option value="">Unassigned</option>@foreach ($companies as $company)<option value="{{ $company->company_id }}" @selected((string) old('company_id') === (string) $company->company_id)>{{ $company->company_name }}</option>@endforeach</select></div>
+                <div class="field"><label>Company</label><input value="{{ $companies->first()?->company_name ?? 'No active company' }}" disabled><small class="muted">New devices are added to the default company.</small></div>
+                <input type="hidden" name="company_id" value="{{ $defaultCompanyId }}">
                 <div class="field"><label for="manufacturing_batch">Manufacturing batch</label><input id="manufacturing_batch" name="manufacturing_batch" value="{{ old('manufacturing_batch') }}" maxlength="100"></div>
             @else
                 <div class="field"><label>Company</label><input value="{{ $companies->firstWhere('company_id', $device->company_id)?->company_name ?? 'Unassigned' }}" disabled><small class="muted">Use Transfer / assign to change ownership.</small></div>

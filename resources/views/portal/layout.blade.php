@@ -132,9 +132,15 @@
         .badge.inactive, .badge.failed, .badge.retired { border-color: #f4d9d8; background: #fff0ef; color: #a3413f; }
         .badge.open, .badge.pending, .badge.queued { border-color: #f0e4bf; background: #fff8e7; color: #916719; }
         .badge.acknowledged { border-color: #dce5fa; background: #eff4ff; color: #3d5f9b; }
+        .badge.armed { border-color: #cfecdd; background: #eaf7ef; color: #19724f; }
+        .monitoring-controls { display: flex; gap: 6px; }
+        .monitoring-controls form { margin: 0; }
+        .monitoring-controls button { min-height: 32px; padding: 6px 10px; }
+        .monitoring-controls button:disabled { border-color: #e5ebe7; background: #f2f5f3; color: #89968f; cursor: default; }
         .button, button { min-height: 39px; padding: 9px 14px; border-color: #dce5df; border-radius: 9px; color: #40564c; font-size: 12px; font-weight: 650; }
         .button:hover, button:hover { border-color: #38ad89; color: #08795e; }
         .alert { border-color: #f2d4d1; border-radius: 10px; background: #fff2f0; color: #9d3934; }
+        .alert-success { border-color: #cfecdd; background: #eaf7ef; color: #19724f; }
         .pagination a, .pagination span[aria-current="page"] span { border-color: #e4ebe6; border-radius: 8px; }
         .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
         .table-search { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin: 0 0 14px; }
@@ -147,6 +153,55 @@
         .table-search-clear { color: #72827b; font-size: 11px; text-decoration: none; }
         .table-search-clear:hover { color: #08795e; text-decoration: underline; }
         .table-search-count { color: #839089; font-size: 11px; white-space: nowrap; }
+        .customer-device-card { position: relative; max-width: 900px; overflow: hidden; margin: 8px auto 35px; padding: clamp(22px, 4vw, 38px); border: 1px solid #e1ebe4; border-radius: 22px; background: linear-gradient(145deg, #fff 0%, #f9fcfa 100%); box-shadow: 0 18px 48px rgba(26,68,49,.08); }
+        .customer-device-card::before { position: absolute; top: -115px; right: -80px; width: 280px; height: 280px; border: 1px solid rgba(15,155,120,.08); border-radius: 50%; content: ""; pointer-events: none; }
+        .customer-device-top, .customer-device-identity, .device-connection, .monitoring-panel, .customer-device-actions { display: flex; align-items: center; }
+        .customer-device-top { position: relative; justify-content: space-between; gap: 14px; }
+        .customer-eyebrow { color: #71817a; font-size: 10px; font-weight: 800; letter-spacing: 1.3px; }
+        .device-connection { gap: 7px; padding: 6px 10px; border: 1px solid #e3ebe6; border-radius: 999px; background: #fff; color: #65766e; font-size: 10px; font-weight: 700; }
+        .connection-dot, .request-pending span { width: 7px; height: 7px; border-radius: 50%; background: #9aa9a0; }
+        .device-connection.online .connection-dot { background: #20a36f; box-shadow: 0 0 0 3px rgba(32,163,111,.12); }
+        .device-connection.offline .connection-dot { background: #d85b57; box-shadow: 0 0 0 3px rgba(216,91,87,.1); }
+        .customer-device-identity { position: relative; gap: 15px; margin-top: 26px; }
+        .customer-device-icon { display: grid; width: 54px; height: 54px; flex: 0 0 auto; place-items: center; border: 1px solid #d9eee3; border-radius: 16px; background: #edf8f1; color: #14815f; }
+        .customer-device-icon svg { width: 27px; height: 27px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.6; }
+        .customer-device-identity h2 { color: #1d3a30; font-size: clamp(19px, 3vw, 25px); letter-spacing: -.6px; }
+        .customer-device-identity p { margin: 4px 0 0; color: #7b8982; font-size: 12px; }
+        .customer-device-meta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 25px; }
+        .customer-device-meta > div { min-width: 0; padding: 13px 15px; border: 1px solid #e8efea; border-radius: 12px; background: rgba(255,255,255,.82); }
+        .customer-device-meta span, .customer-device-meta strong { display: block; }
+        .customer-device-meta span { margin-bottom: 5px; color: #829088; font-size: 10px; font-weight: 650; }
+        .customer-device-meta strong { overflow-wrap: anywhere; color: #354940; font-size: 12px; }
+        .monitoring-panel { gap: 13px; margin-top: 17px; padding: 16px; border: 1px solid #d6ecdf; border-radius: 14px; background: linear-gradient(110deg, #edf8f0, #f7fbf7); }
+        .monitoring-panel.disarmed { border-color: #e6e9df; background: linear-gradient(110deg, #f5f6f0, #fbfbf8); }
+        .monitoring-panel.armed { border-color: #cfe9da; }
+        .monitoring-state-icon { display: grid; width: 42px; height: 42px; flex: 0 0 auto; place-items: center; border-radius: 12px; background: #dff2e6; color: #168052; }
+        .monitoring-panel.disarmed .monitoring-state-icon { background: #e9ece4; color: #66735f; }
+        .monitoring-state-icon svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.7; }
+        .monitoring-state-copy { min-width: 0; }
+        .monitoring-state-copy span, .monitoring-state-copy strong, .monitoring-state-copy small { display: block; }
+        .monitoring-state-copy span { color: #71817a; font-size: 9px; font-weight: 800; letter-spacing: .8px; }
+        .monitoring-state-copy strong { margin-top: 2px; color: #176d4a; font-size: 18px; }
+        .monitoring-panel.disarmed .monitoring-state-copy strong { color: #596754; }
+        .monitoring-state-copy small { margin-top: 2px; color: #778780; font-size: 11px; }
+        .request-pending { display: inline-flex; align-items: center; gap: 7px; margin-left: auto; padding: 6px 9px; border: 1px solid #f1e3c2; border-radius: 999px; background: #fff9e9; color: #8b691d; font-size: 9px; font-weight: 750; white-space: nowrap; }
+        .request-pending span { background: #d49a23; box-shadow: 0 0 0 3px rgba(212,154,35,.12); }
+        .customer-device-actions { gap: 11px; margin-top: 20px; }
+        .customer-device-actions form { flex: 1; margin: 0; }
+        .customer-device-actions button { display: flex; width: 100%; min-height: 52px; gap: 9px; border-radius: 12px; font-size: 13px; font-weight: 750; transition: transform .15s ease, box-shadow .15s ease; }
+        .customer-device-actions button:not(:disabled):hover { transform: translateY(-1px); box-shadow: 0 7px 18px rgba(26,68,49,.12); }
+        .customer-device-actions button svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.7; }
+        .customer-device-actions .arm-button { border-color: #0f9b78; background: #0f9b78; color: #fff; }
+        .customer-device-actions .arm-button:not(:disabled):hover { border-color: #08795e; background: #08795e; color: #fff; }
+        .customer-device-actions .disarm-button { border-color: #dce5df; background: #fff; color: #46584f; }
+        .customer-device-actions .arm-button.is-selected:not(:disabled) { box-shadow: inset 0 0 0 2px rgba(255,255,255,.35), 0 0 0 3px rgba(15,155,120,.15); }
+        .customer-device-actions .disarm-button.is-selected:not(:disabled) { border-color: #8a9990; background: #eef2ef; color: #34483e; box-shadow: 0 0 0 3px rgba(87,112,96,.09); }
+        .customer-device-actions button:disabled { border-color: #e3e9e5; background: #f1f4f2; color: #8c9992; cursor: default; }
+        .customer-device-note { margin: 13px 0 0; color: #829088; font-size: 10px; text-align: center; }
+        .customer-empty-card { max-width: 620px; margin: 35px auto 60px; padding: 35px 24px; border: 1px dashed #cfded3; border-radius: 18px; background: #fbfdfb; text-align: center; }
+        .customer-empty-icon { display: grid; width: 44px; height: 44px; margin: 0 auto 13px; place-items: center; border-radius: 50%; background: #edf5ef; color: #64806c; font-size: 20px; font-weight: 800; }
+        .customer-empty-card h2 { color: #294438; font-size: 17px; }
+        .customer-empty-card p { max-width: 390px; margin: 8px auto 0; color: #78877f; font-size: 12px; }
         @media (max-width: 760px) {
             .topbar { position: static; gap: 10px; }
             .top-actions { align-items: center; gap: 8px; }
@@ -162,6 +217,19 @@
             .table-search { align-items: flex-start; flex-direction: column; gap: 7px; }
             .table-search-control { width: 100%; }
             .table-search-count { padding-left: 2px; }
+            .customer-device-card { margin: 4px 0 28px; padding: 22px 17px; border-radius: 17px; }
+            .customer-device-identity { margin-top: 22px; }
+            .customer-device-meta { gap: 8px; }
+            .customer-device-meta > div { padding: 11px; }
+            .monitoring-panel { align-items: flex-start; gap: 10px; padding: 13px 11px; }
+            .monitoring-state-icon { width: 36px; height: 36px; }
+            .request-pending { margin: 0 0 0 auto; padding: 5px 7px; font-size: 8px; }
+        }
+        @media (max-width: 420px) {
+            .customer-device-meta { grid-template-columns: 1fr; }
+            .customer-device-actions { align-items: stretch; flex-direction: column; }
+            .customer-device-actions button { min-height: 49px; }
+            .monitoring-state-copy small { max-width: 190px; }
         }
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
@@ -194,6 +262,9 @@
         </div>
     </header>
     <main>
+        @if (session('status'))
+            <div class="alert alert-success" role="status">{{ session('status') }}</div>
+        @endif
         @if ($errors->any())
             <div class="alert" role="alert">{{ $errors->first() }}</div>
         @endif

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\MasterAdmin;
 
 use App\Http\Controllers\Controller;
 use App\Services\AdminAuditLogger;
+use App\Services\DefaultCompany;
 use App\Support\TableSearch;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -45,7 +46,8 @@ class ShopManagementController extends Controller
     public function store(Request $request, AdminAuditLogger $audit): RedirectResponse
     {
         $data = $this->validated($request);
-        $this->validateCustomerCompany($data['customer_user_id'], $data['company_id'] ?? null);
+        $data['company_id'] = app(DefaultCompany::class)->requireId();
+        $this->validateCustomerCompany($data['customer_user_id'], $data['company_id']);
         $data['created_at'] = now();
         $data['updated_at'] = now();
 
@@ -68,7 +70,8 @@ class ShopManagementController extends Controller
     {
         $current = DB::table('shops')->where('shop_id', $shop)->firstOrFail();
         $data = $this->validated($request, $shop);
-        $this->validateCustomerCompany($data['customer_user_id'], $data['company_id'] ?? null);
+        $data['company_id'] = app(DefaultCompany::class)->requireId();
+        $this->validateCustomerCompany($data['customer_user_id'], $data['company_id']);
         $data['updated_at'] = now();
 
         DB::table('shops')->where('shop_id', $shop)->update($data);
@@ -98,8 +101,12 @@ class ShopManagementController extends Controller
 
     private function formOptions(): array
     {
+        $defaultCompanyId = app(DefaultCompany::class)->id();
+
         return [
-            'companies' => DB::table('companies')->orderBy('company_name')->get(),
+            'companies' => DB::table('companies')
+                ->where('company_id', $defaultCompanyId ?? 0)
+                ->get(),
             'customers' => DB::table('users')
                 ->join('roles', 'roles.role_id', '=', 'users.role_id')
                 ->where('roles.role_code', 'END_CUSTOMER')

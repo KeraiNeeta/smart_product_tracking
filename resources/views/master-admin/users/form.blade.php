@@ -30,17 +30,19 @@
 </div>
 
 <div class="field">
-    <label for="company_id">Company <span class="muted">(optional)</span></label>
+    <label for="company_id">Company</label>
     <select id="company_id" name="company_id">
         <option value="">No company</option>
         @foreach ($companies as $company)
-            <option value="{{ $company->company_id }}" @selected((string) old('company_id', $managedUser?->company_id) === (string) $company->company_id)>
+            <option value="{{ $company->company_id }}" @selected((string) old('company_id', $managedUser?->company_id ?? $defaultCompanyId) === (string) $company->company_id)>
                 {{ $company->company_name }}
             </option>
         @endforeach
     </select>
     @if ($companies->isEmpty())
-        <small class="muted">No companies have been created yet.</small>
+        <small class="muted">No active company is available. Create an active company first.</small>
+    @else
+        <small class="muted">Dealer, sub-dealer, company admin, and End Customer accounts are assigned to the default company.</small>
     @endif
     @error('company_id') <div class="error">{{ $message }}</div> @enderror
 </div>

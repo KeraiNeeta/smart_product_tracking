@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\AdminAuditLogger;
+use App\Services\DefaultCompany;
 use App\Support\TableSearch;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -51,7 +52,8 @@ class UserManagementController extends Controller
             'status' => ['required', Rule::in(['pending', 'active', 'inactive', 'blocked'])],
         ]);
 
-        $this->validateParentCompany($data['parent_user_id'] ?? null, $data['company_id'] ?? null);
+        $data['company_id'] = $this->companyForRole((int) $data['role_id'], $data['company_id'] ?? null);
+        $this->validateParentCompany($data['parent_user_id'] ?? null, $data['company_id']);
         $password = $data['password'];
         unset($data['password']);
 
@@ -114,7 +116,8 @@ class UserManagementController extends Controller
                 ]);
             }
         }
-        $this->validateParentCompany($data['parent_user_id'] ?? null, $data['company_id'] ?? null);
+        $data['company_id'] = $this->companyForRole((int) $data['role_id'], $data['company_id'] ?? null);
+        $this->validateParentCompany($data['parent_user_id'] ?? null, $data['company_id']);
         $before = $user->attributesToArray();
         unset($before['password_hash']);
         $newRole = Role::findOrFail($data['role_id']);
@@ -178,9 +181,14 @@ class UserManagementController extends Controller
 
     private function formOptions(?int $excludeUserId = null): array
     {
+        $defaultCompanyId = app(DefaultCompany::class)->id();
+
         return [
             'roles' => Role::orderBy('role_name')->get(),
-            'companies' => DB::table('companies')->orderBy('company_name')->get(),
+            'companies' => DB::table('companies')
+                ->where('company_id', $defaultCompanyId ?? 0)
+                ->get(),
+            'defaultCompanyId' => $defaultCompanyId,
             'parents' => DB::table('users')
                 ->join('roles', 'roles.role_id', '=', 'users.role_id')
                 ->whereNull('deleted_at')
@@ -190,6 +198,16 @@ class UserManagementController extends Controller
                 ->orderBy('full_name')
                 ->get(['users.user_id', 'users.full_name', 'users.company_id', 'roles.role_name']),
         ];
+    }
+
+    private function companyForRole(int $roleId, ?int $requestedCompanyId): ?int
+    {
+        $roleCode = Role::findOrFail($roleId)->role_code;
+        if (in_array($roleCode, ['COMPANY_ADMIN', 'DEALER', 'SUB_DEALER', 'END_CUSTOMER'], true)) {
+            return app(DefaultCompany::class)->requireId();
+        }
+
+        return $requestedCompanyId;
     }
 
     private function validateParentCompany(?int $parentUserId, ?int $companyId): void
