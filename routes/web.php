@@ -10,6 +10,7 @@ use App\Http\Controllers\MasterAdmin\NotificationRuleManagementController;
 use App\Http\Controllers\MasterAdmin\NotificationProviderSettingsController;
 use App\Http\Controllers\MasterAdmin\OperationsController;
 use App\Http\Controllers\Auth\MasterAdminAuthController;
+use App\Http\Controllers\Auth\EndCustomerRegistrationController;
 use App\Http\Controllers\Account\ProfileController;
 use App\Http\Controllers\MasterAdmin\RoleManagementController;
 use App\Http\Controllers\MasterAdmin\ShopManagementController;
@@ -30,8 +31,17 @@ Route::post('/login', [
     'login',
 ])->name('master-admin.login.submit');
 
+Route::get('/register', [EndCustomerRegistrationController::class, 'show'])
+    ->name('register');
+Route::post('/register', [EndCustomerRegistrationController::class, 'store'])
+    ->middleware('throttle:5,1')
+    ->name('register.submit');
+
 Route::middleware('auth')->prefix('portal')->name('portal.')->group(function () {
     Route::get('/', [RolePortalController::class, 'dashboard'])->name('dashboard');
+    Route::post('/devices/{device}/monitoring-state', [RolePortalController::class, 'setMonitoringState'])
+        ->whereNumber('device')
+        ->name('devices.monitoring-state');
     Route::get('/notifications', [RolePortalController::class, 'notifications'])->name('notifications');
     Route::post('/notifications/read', [RolePortalController::class, 'markNotificationsRead'])->name('notifications.read');
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile');

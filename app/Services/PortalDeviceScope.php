@@ -23,6 +23,7 @@ class PortalDeviceScope
             ->select(
                 'devices.device_id',
                 'devices.device_uid',
+                'devices.serial_number',
                 'devices.model',
                 'devices.lifecycle_status',
                 'devices.connectivity_status',

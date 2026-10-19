@@ -108,6 +108,7 @@
 
                     <button type="submit">Sign in</button>
                 </form>
+                <div class="secure-note"><a href="{{ route('register') }}">Create an End Customer account</a></div>
                 <div class="secure-note">Secure access for authorized Shop Guard users</div>
             </div>
         </section>
